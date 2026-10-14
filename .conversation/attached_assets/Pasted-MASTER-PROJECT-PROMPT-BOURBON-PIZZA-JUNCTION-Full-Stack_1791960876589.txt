@@ -1,0 +1,988 @@
+MASTER PROJECT PROMPT: BOURBON PIZZA JUNCTION
+
+Full-Stack Digital Ordering & Restaurant Management Platform
+
+1. YOUR ROLE
+
+Act as a senior full-stack software engineer, software architect, database engineer, UI/UX designer and restaurant technology consultant.
+
+Design and build a complete, secure, production-oriented digital ordering and restaurant management system for BOURBON PIZZA JUNCTION, Wandegeya, Kampala, Uganda.
+
+The project should be suitable for development and eventual commercial deployment by Slother’s Tech House.
+
+This is not merely a restaurant landing page. It must be a functional full-stack application combining:
+
+1. A public restaurant website.
+2. A searchable digital menu.
+3. A food customisation and shopping-cart system.
+4. Online ordering and checkout.
+5. Manual MTN Mobile Money and Airtel Money payment workflows without payment APIs in the initial release.
+6. Automatic delivery-fee calculation at UGX 1,000 per kilometre using driving-route distance.
+7. A protected administration dashboard.
+8. A kitchen order management interface.
+9. Sales reporting and promotion management.
+10. Configurable business settings.
+
+The system must use real database persistence, server-side validation and functioning user interfaces. Do not deliver a static mock-up or an application whose main buttons do nothing.
+
+Use the following reference as inspiration for a searchable meal catalogue and online ordering experience:
+
+https://app.forkandgoexpress.com/meals?q=English%20breakfast
+
+Treat the reference as a functional design reference only. Do not copy its proprietary code, branding or assets.
+
+⸻
+
+2. REQUIRED TECHNOLOGY STACK
+
+Use the following architecture.
+
+FRONTEND
+
+* React.
+* TypeScript with strict type checking.
+* Vite as the development and frontend build tool.
+* Tailwind CSS.
+* React Router for navigation.
+* TanStack Query for server-state fetching, caching and synchronisation.
+* React Hook Form and Zod for form validation where appropriate.
+* A consistent, accessible component system.
+* Lucide icons or an equivalent open-source icon library.
+
+BACKEND
+
+* Node.js.
+* Express.
+* TypeScript.
+* REST API with documented endpoints.
+* Zod or equivalent request validation.
+* Prisma ORM.
+* PostgreSQL.
+
+SUPPORTING TOOLS
+
+* Git and GitHub for version control.
+* Environment variables for secrets and configuration.
+* Persistent image storage suitable for production.
+* Automated tests for critical business logic.
+* A supported PostgreSQL hosting provider for production.
+
+Use compatible, stable package versions and commit the package lockfile.
+
+Organise the code into clear frontend, backend, database, validation, services and shared-type modules. Reuse shared schemas where practical without introducing fragile cross-project imports.
+
+Do not place database credentials, payment secrets or privileged business logic in frontend code.
+
+⸻
+
+3. BRANDING AND DESIGN SYSTEM
+
+Business: Bourbon Pizza Junction.
+
+Location: Wandegeya, Kampala, Uganda.
+
+Currency: Uganda Shillings (UGX).
+
+Design a modern, premium, appetising restaurant experience.
+
+Visual direction:
+
+* Near-black or charcoal backgrounds for selected sections.
+* Warm white or ivory surfaces for readable content.
+* A controlled red or burnt-orange accent.
+* High-quality food photography.
+* Clear typography and generous spacing.
+* Polished product cards.
+* Subtle hover states and transitions.
+* Mobile-first layouts.
+* Strong visual hierarchy and accessible contrast.
+* Lightweight assets and good performance on mobile data.
+
+Avoid excessive gradients, unnecessary animation, cluttered dashboards and oversized decorative elements.
+
+Create a reusable design system covering colours, typography, buttons, cards, forms, dialogs, navigation, alerts, badges and loading states.
+
+Use the restaurant’s actual logo and verified brand assets if supplied. Do not fabricate an official logo or claim unverified contact information.
+
+All layouts must work on mobile phones, tablets and desktop computers.
+
+⸻
+
+4. PUBLIC WEBSITE
+
+Create the following customer-facing routes:
+
+* / — Homepage.
+* /menu — Complete digital menu.
+* /menu/:slug — Individual product details, if appropriate.
+* /cart — Shopping cart.
+* /checkout — Checkout.
+* /order/:reference — Secure order status and summary.
+* /contact — Contact and directions.
+* /policies — Delivery, exchange, refund and cancellation policies.
+* /privacy — Privacy information.
+
+Provide a consistent navigation bar, mobile navigation, footer and clear ordering actions.
+
+Homepage
+
+Include:
+
+* Hero section featuring appetising food photography.
+* Prominent Order Now button.
+* Featured meals.
+* Popular categories.
+* Current promotions.
+* Combo and family meal highlights.
+* Delivery and pickup information.
+* Restaurant location and directions.
+* Contact and WhatsApp actions.
+* Opening hours.
+* Policy links.
+
+Promotional content must be editable through the administration dashboard.
+
+Searchable menu
+
+Implement a genuine searchable catalogue.
+
+Search should match product names, descriptions and categories.
+
+Support URL query parameters such as:
+
+/menu?q=pizza
+
+The interface must retain search terms when the page is refreshed and allow customers to share a search URL.
+
+Include configurable categories such as:
+
+* Pizza.
+* Burgers.
+* Fried chicken.
+* Snacks and sides.
+* Drinks and mocktails.
+* Combos and family meals.
+* Other categories created by administrators.
+
+Each product card should display:
+
+* Product image.
+* Product name.
+* Description.
+* Price in UGX.
+* Availability.
+* Applicable size or option information.
+* Add-to-cart action.
+
+Include sorting and filters where useful.
+
+Display helpful empty states when searches return no results.
+
+Do not invent the restaurant’s complete menu or actual prices. Seed clearly labelled sample products until the restaurant supplies its verified catalogue.
+
+⸻
+
+5. PRODUCT CUSTOMISATION
+
+Build a configurable product-options engine.
+
+For pizzas, support:
+
+* Product flavour.
+* Small, medium and large sizes where offered.
+* Crust choices where offered.
+* Extra cheese.
+* Additional toppings.
+* Sauces and sides.
+* Special preparation instructions.
+
+For burgers and other suitable products, support configurable add-ons and meal upgrades.
+
+Administrators must be able to define which option groups apply to each product.
+
+Each option may have its own additional price.
+
+Calculate the total price using the product’s current database price, selected size, selected extras and quantity.
+
+Validate all selections on the server.
+
+Never trust prices supplied by the browser.
+
+Display the full customisation and price breakdown before adding the product to the cart.
+
+⸻
+
+6. SHOPPING CART
+
+Implement a complete working cart.
+
+Features:
+
+* Add items.
+* Remove items.
+* Change quantities.
+* Edit customisations.
+* Show item-level prices.
+* Show subtotals.
+* Show discounts.
+* Show delivery charges.
+* Show the final payable total.
+* Persist the cart across normal navigation and refreshes.
+
+Use a clear order summary.
+
+Revalidate product availability and all prices during checkout.
+
+Prevent a customer from ordering a product that has been disabled or marked unavailable.
+
+Do not allow the browser to determine the authoritative final price.
+
+⸻
+
+7. CHECKOUT AND ORDER CREATION
+
+Collect:
+
+* Customer’s full name.
+* Phone number.
+* Optional email.
+* Delivery or pickup selection.
+* Delivery address, when applicable.
+* Map-selected delivery location, when applicable.
+* Delivery instructions.
+* Optional requested time, if scheduling is enabled.
+* Payment method.
+* Special order instructions.
+
+Support guest checkout without requiring a customer account.
+
+For pickup, do not charge a delivery fee.
+
+For delivery, require a valid delivery location and a successfully calculated fee, unless an authorised administrator explicitly approves a manual exception.
+
+Generate a unique, non-guessable public order reference.
+
+Create orders transactionally and store historical snapshots of product names, option selections, unit prices, quantities, discounts and delivery fees.
+
+The server must recalculate the final total before saving the order.
+
+Use a reliable duplicate-submission prevention mechanism so refreshing or retrying a checkout request does not create duplicate orders.
+
+After order creation, display:
+
+* Order reference.
+* Items and quantities.
+* Product customisations.
+* Subtotal.
+* Discounts.
+* Delivery distance.
+* Delivery fee.
+* Total amount due.
+* Selected payment method.
+* Payment status.
+* Order status.
+* Instructions for the next step.
+
+Never display an order as successfully paid merely because an order record was created.
+
+⸻
+
+8. MTN MOBILE MONEY AND AIRTEL MONEY — NO PAYMENT APIS INITIALLY
+
+Implement a manual Mobile Money payment workflow.
+
+The initial version must NOT require MTN MoMo APIs, Airtel Money APIs, an aggregator API or automatic transaction verification.
+
+Do not simulate a real payment integration.
+
+Customer payment options
+
+Display two clear options:
+
+* Pay with MTN Mobile Money.
+* Pay with Airtel Money.
+
+The payment number and instructions must be configurable by an authorised administrator.
+
+For each network, support configuration of:
+
+* Display name.
+* Registered payment number or merchant identifier.
+* Payment instructions.
+* Enabled or disabled status.
+* Applicable payment method description.
+
+The administrator must confirm the actual payment details before the system goes live.
+
+Customer experience
+
+When a customer chooses MTN or Airtel:
+
+1. Display the exact order amount due.
+2. Display the restaurant’s configured payment details.
+3. Provide a concise, network-specific instruction flow.
+4. Offer a copy-payment-number action.
+5. Explain that the customer must authorise payment using the official operator interface or a supported operator flow.
+6. Provide a field for the Mobile Money transaction reference after payment.
+7. Allow the customer to submit the reference for staff verification.
+8. Show the payment as awaiting verification.
+
+If a supported official USSD or app payment flow is implemented later, it must be verified against the relevant operator’s capabilities. Do not assume that an ordinary website button can trigger a PIN prompt.
+
+NEVER:
+
+* Request or store a Mobile Money PIN.
+* Request or store an OTP.
+* Collect sensitive payment credentials.
+* Claim that entering a transaction reference proves payment.
+* Mark an order paid based on a screenshot alone.
+* Fabricate a successful transaction.
+* Use unofficial methods to initiate payments.
+
+The customer enters their PIN only in an authorised operator-controlled interface or approved payment prompt.
+
+Payment verification dashboard
+
+Create a dedicated payment-verification queue.
+
+Display:
+
+* Order reference.
+* Customer details.
+* Expected amount.
+* Network.
+* Configured recipient identifier.
+* Customer-submitted transaction reference.
+* Submission time.
+* Payment status.
+* Assigned or verifying staff member.
+* Verification history.
+
+Possible payment statuses:
+
+* Unpaid.
+* Awaiting customer payment.
+* Reference submitted.
+* Under review.
+* Verified.
+* Rejected.
+* Refunded, where applicable.
+
+Authorised staff can approve or reject submitted payment references after checking actual Mobile Money transaction records.
+
+When approving a payment, require confirmation that the payment amount, recipient and transaction reference match the actual transaction.
+
+Record:
+
+* Staff member responsible.
+* Timestamp.
+* Previous status.
+* New status.
+* Verification notes.
+
+Prevent duplicate transaction references from being reused to verify multiple payments. Enforce this protection on the server and in the database.
+
+Only authorised roles may verify payments.
+
+Keep payment status separate from kitchen and delivery status.
+
+Payment and order status rules
+
+* An order can exist while its payment is awaiting verification.
+* A submitted transaction reference does not mean payment has been received.
+* A verified payment must be recorded separately from order preparation.
+* A rejected payment must not be treated as paid.
+* Order preparation and payment-handling rules must be configurable by the restaurant.
+* If the restaurant chooses to prepare orders before payment verification, clearly record the business risk and preserve an auditable status history.
+
+Keep the architecture ready for future official payment API integrations without requiring a database redesign.
+
+⸻
+
+9. AUTOMATIC DELIVERY FEES — UGX 1,000 PER KILOMETRE
+
+Implement map-based delivery calculation.
+
+Default delivery origin:
+
+Bourbon Pizza Junction, Wandegeya, Kampala, Uganda.
+
+Default delivery rate:
+
+UGX 1,000 per kilometre.
+
+The rate must be editable through the admin dashboard.
+
+Location selection
+
+Allow customers to:
+
+* Enter a delivery address.
+* Select a location on an interactive map.
+* Adjust the map pin.
+* Enter additional directions for the rider.
+
+Use a suitable geocoding and routing service.
+
+Do not invent coordinates for Bourbon. Have an administrator confirm the exact restaurant location before production deployment.
+
+Route calculation
+
+Calculate the one-way driving distance from the confirmed restaurant location to the customer’s selected delivery location.
+
+Do not use straight-line GPS distance as a substitute for road distance.
+
+Use a genuine routing service, such as a suitably hosted OSRM service or a configured commercial routing API.
+
+The routing provider must be configurable.
+
+Handle:
+
+* Invalid locations.
+* Unreachable destinations.
+* Routing-service failures.
+* Locations outside the delivery area.
+* Missing route distances.
+* Requests exceeding provider limits.
+
+Do not silently charge a guessed fee if route calculation fails.
+
+Fee formula
+
+Default calculation:
+
+Delivery Fee = ROUND UP (One-Way Route Distance in Kilometres) × UGX 1,000
+
+For example:
+
+* 2.0 km = UGX 2,000.
+* 3.4 km = UGX 4,000.
+* 5.0 km = UGX 5,000.
+* 8.2 km = UGX 9,000.
+
+Use the precise distance returned by the routing provider, convert it to kilometres and apply the configured rounding rule consistently.
+
+The customer must see:
+
+* Delivery destination.
+* Calculated route distance.
+* Delivery rate per kilometre.
+* Rounding rule.
+* Final delivery fee.
+* Final order total.
+
+Recalculate the fee on the server at checkout.
+
+Do not trust a delivery fee or distance supplied by the browser.
+
+Persist the distance, rate, rounding rule, delivery fee and origin/destination coordinates associated with the order so subsequent configuration changes do not alter historical order totals.
+
+If a route changes or the quote expires, recalculate and request customer confirmation before payment.
+
+Administrator delivery settings
+
+Allow authorised administrators to configure:
+
+* Restaurant location.
+* Delivery rate.
+* Distance rounding method.
+* Maximum delivery distance.
+* Delivery enable/disable status.
+* Minimum order value.
+* Delivery availability hours.
+* Manual delivery-fee override, with a required reason and audit log.
+* Optional delivery zones and special rules.
+
+For pickup orders, delivery fee must always be zero.
+
+Never calculate a return-trip charge unless the restaurant explicitly changes the policy.
+
+Maps and privacy
+
+Do not expose private routing-service credentials in the browser.
+
+Restrict public map credentials where the provider supports restrictions.
+
+Request location permission only when needed.
+
+Do not store precise customer location beyond what is necessary for fulfilling and recording the order.
+
+Use a clear location privacy notice.
+
+⸻
+
+10. ADMINISTRATIVE DASHBOARD
+
+Create a secure administration area under /admin.
+
+Require authentication and enforce permissions on the backend.
+
+Build the following modules.
+
+Dashboard overview
+
+Display actual database-driven:
+
+* Orders today.
+* Gross sales today.
+* Orders awaiting confirmation.
+* Orders awaiting payment verification.
+* Orders being prepared.
+* Ready orders.
+* Completed orders.
+* Cancelled orders.
+* Best-selling products.
+* Recent activity.
+
+Do not use fabricated statistics in production.
+
+Menu management
+
+Allow administrators to:
+
+* Create and edit products.
+* Set prices.
+* Manage sizes and option groups.
+* Upload images.
+* Create categories.
+* Mark products unavailable.
+* Feature products.
+* Archive products.
+* Configure preparation information.
+
+Changes must appear on the customer-facing website without code deployment.
+
+Order management
+
+Provide search, filters and status updates.
+
+Display:
+
+* Order reference.
+* Customer contact.
+* Products and customisations.
+* Payment method and status.
+* Delivery information.
+* Preparation notes.
+* Amount due.
+* Order timestamps.
+* Status history.
+
+Prevent unauthorised staff from accessing restricted financial or customer information.
+
+Promotion management
+
+Support:
+
+* Percentage discounts.
+* Fixed-amount discounts.
+* Validity dates.
+* Minimum order amounts.
+* Eligible products and categories.
+* Usage limits.
+* Buy One Get One Free promotions.
+* Enable/disable controls.
+
+Ensure the server validates all promotion conditions and calculates discounts.
+
+Business settings
+
+Allow authorised administrators to update:
+
+* Restaurant name and public details.
+* Confirmed location.
+* Contact information.
+* Opening hours.
+* Delivery rate and limits.
+* MTN payment details.
+* Airtel payment details.
+* Payment instructions.
+* Pickup and delivery availability.
+* Tax or other charges if applicable.
+* Customer-facing policy content.
+
+Protect sensitive configuration using server-side permissions.
+
+Record changes to critical settings in an audit log.
+
+⸻
+
+11. KITCHEN DISPLAY SYSTEM
+
+Create a separate kitchen-facing interface.
+
+Display large, readable order cards with:
+
+* Order reference.
+* Order time.
+* Elapsed preparation time.
+* Food items.
+* Quantities.
+* Pizza sizes.
+* Toppings and extras.
+* Special instructions.
+* Current preparation status.
+
+Support:
+
+* New orders.
+* Accepted orders.
+* Preparing orders.
+* Ready orders.
+
+Provide large touch-friendly buttons.
+
+New orders should appear through server-sent events, WebSockets or a reliable polling mechanism.
+
+Handle reconnections and missed updates.
+
+Do not let kitchen staff access privileged payment verification or account administration unless explicitly authorised.
+
+Record important status changes and responsible staff members.
+
+⸻
+
+12. ORDER STATUS AND NOTIFICATIONS
+
+Implement a customer order-tracking page using a secure order reference and an appropriate verification mechanism.
+
+Display meaningful states such as:
+
+* Order received.
+* Awaiting payment.
+* Payment under review.
+* Payment verified.
+* Confirmed.
+* Preparing.
+* Ready for pickup.
+* Out for delivery.
+* Completed.
+* Cancelled.
+
+Avoid exposing another customer’s order information through predictable order IDs.
+
+Provide copyable order references.
+
+For the initial release, use in-app status updates and clear confirmation screens.
+
+Design a notification service that can later support WhatsApp, email or SMS through properly configured providers.
+
+Do not pretend that messages have been sent when no notification provider is connected.
+
+⸻
+
+13. DATABASE DESIGN
+
+Use PostgreSQL and Prisma.
+
+Create suitable relational models for:
+
+* User.
+* Role and permissions.
+* Customer contact details where necessary.
+* Category.
+* Product.
+* Product image.
+* Product option group.
+* Product option.
+* Promotion.
+* Promotion eligibility.
+* Order.
+* Order item.
+* Selected product options.
+* Payment record.
+* Payment verification history.
+* Delivery quote or calculation snapshot.
+* Restaurant settings.
+* Delivery settings.
+* Staff activity and audit logs.
+
+Add:
+
+* Primary keys.
+* Appropriate foreign keys.
+* Useful indexes.
+* Unique constraints.
+* Correct monetary precision.
+* Explicit status enums or validated state models.
+* Timestamps.
+* Soft deletion or archiving where appropriate.
+
+Use integer UGX amounts where appropriate to avoid floating-point money errors.
+
+Store historical product and pricing snapshots on order items.
+
+Store historical delivery calculation information on orders.
+
+Store payment references separately from customer-facing notes.
+
+Use database transactions for order creation, payment status transitions and other multi-record operations.
+
+Do not store plaintext passwords.
+
+Do not expose password hashes, private credentials or internal audit information to customers.
+
+Provide versioned Prisma migrations and a development seed script.
+
+The seed script must use clearly labelled demo products and must never silently create a default production administrator with a publicly known password.
+
+⸻
+
+14. API DESIGN
+
+Create a documented REST API.
+
+Suggested public endpoints:
+
+* GET /api/menu
+* GET /api/menu/categories
+* GET /api/menu/:slug
+* POST /api/delivery/quote
+* POST /api/orders
+* GET /api/orders/:reference
+* POST /api/orders/:reference/payment-reference
+
+Suggested administrative endpoints:
+
+* GET /api/admin/dashboard
+* GET /api/admin/orders
+* PATCH /api/admin/orders/:id/status
+* GET /api/admin/payments
+* POST /api/admin/payments/:id/verify
+* POST /api/admin/payments/:id/reject
+* POST /api/admin/products
+* PATCH /api/admin/products/:id
+* POST /api/admin/categories
+* POST /api/admin/promotions
+* GET /api/admin/reports
+* GET /api/admin/settings
+* PATCH /api/admin/settings
+
+These routes are illustrative. Implement consistent, validated endpoints appropriate to the final schema.
+
+Use:
+
+* Structured error responses.
+* Correct HTTP status codes.
+* Pagination.
+* Filtering and search.
+* Authentication middleware.
+* Role and permission middleware.
+* Rate limiting on sensitive endpoints.
+* Request validation.
+* Secure CORS configuration.
+* Logging without leaking sensitive data.
+
+Do not implement privileged actions as frontend-only checks.
+
+⸻
+
+15. SECURITY AND RELIABILITY
+
+Implement:
+
+* Strict TypeScript configuration.
+* Secure authentication.
+* Server-side authorisation.
+* Password hashing with a suitable modern algorithm.
+* Secure session cookies or a properly implemented token strategy.
+* CSRF protection where applicable.
+* Protection against injection and cross-site scripting.
+* Request-size limits.
+* Rate limiting.
+* Input validation.
+* Safe file uploads.
+* Secure environment-variable handling.
+* Payment-reference uniqueness.
+* Duplicate order protection.
+* Audit logging.
+* Error handling.
+* Database backup guidance.
+* A documented recovery procedure.
+
+Use HTTPS in production.
+
+Do not log passwords, PINs, OTPs, session secrets or payment credentials.
+
+Avoid collecting more customer information than necessary.
+
+⸻
+
+16. REPORTING
+
+Implement reports for:
+
+* Daily, weekly and monthly order volumes.
+* Gross sales.
+* Discounts.
+* Refunds, where applicable.
+* Net sales.
+* Orders by status.
+* Popular products.
+* Sales by category.
+* Payment methods.
+* Payment verification outcomes.
+* Average order value.
+* Cancelled orders.
+
+Allow authorised users to filter reports by date and export CSV.
+
+Clearly distinguish revenue from profit. Only calculate profit if the restaurant has supplied appropriate cost data.
+
+All reports must derive from real database records.
+
+⸻
+
+17. TESTING REQUIREMENTS
+
+Write automated tests for critical business logic.
+
+Test at least:
+
+* Product price calculations.
+* Size and topping price calculations.
+* Quantity calculations.
+* Promotion eligibility.
+* Buy One Get One Free rules.
+* Delivery fee rounding.
+* Delivery fee calculations.
+* Pickup orders with zero delivery fees.
+* Invalid or unreachable delivery destinations.
+* Server-side price recalculation.
+* Duplicate order prevention.
+* Duplicate Mobile Money reference prevention.
+* Payment verification permissions.
+* Invalid payment status transitions.
+* Role-based access control.
+* Order status transitions.
+* Database transaction failures.
+
+Include an end-to-end test for a complete customer ordering journey.
+
+Test mobile responsiveness and common error states.
+
+Do not claim tests pass unless they have actually been executed.
+
+⸻
+
+18. DEVELOPMENT AND DEPLOYMENT
+
+Build in manageable phases.
+
+PHASE 1 — FOUNDATION
+
+* Inspect the project environment.
+* Establish the repository structure.
+* Configure TypeScript, Vite, React and Tailwind CSS.
+* Configure Express.
+* Configure PostgreSQL and Prisma.
+* Add migrations and seed data.
+* Implement authentication.
+
+PHASE 2 — CUSTOMER ORDERING
+
+* Build homepage.
+* Build menu and search.
+* Build product customisation.
+* Build cart.
+* Build checkout.
+* Implement server-side pricing.
+* Save orders in PostgreSQL.
+
+PHASE 3 — MOBILE MONEY
+
+* Add MTN and Airtel selection.
+* Add configurable payment details.
+* Add customer transaction-reference submission.
+* Build payment verification dashboard.
+* Implement audit logs and duplicate-reference prevention.
+
+PHASE 4 — DELIVERY
+
+* Configure the restaurant’s confirmed origin.
+* Integrate a real routing service.
+* Calculate one-way road distance.
+* Calculate delivery fees at UGX 1,000/km.
+* Build map selection and address input.
+* Recalculate and validate fees on the server.
+
+PHASE 5 — OPERATIONS
+
+* Build order management.
+* Build kitchen display.
+* Add status updates.
+* Add menu management.
+* Add promotions.
+* Add reports and settings.
+
+PHASE 6 — HARDENING AND DEPLOYMENT
+
+* Run tests.
+* Fix errors.
+* Review security.
+* Configure production environment variables.
+* Run migrations.
+* Build and deploy frontend and backend.
+* Configure persistent image storage.
+* Configure database backups.
+* Document deployment and maintenance.
+
+Use one consistent source of truth for configuration, database records and business calculations.
+
+Provide a root-level README with installation, development, testing and deployment instructions.
+
+Include an .env.example with placeholder values only.
+
+Do not expose actual secrets or commit .env files.
+
+⸻
+
+19. DEFINITION OF DONE
+
+The application is complete only when:
+
+1. Customers can browse and search the real database-backed menu.
+2. Product customisations and prices calculate correctly.
+3. Customers can place delivery and pickup orders.
+4. Orders persist in PostgreSQL.
+5. Customers can select MTN or Airtel for manual Mobile Money payment.
+6. Customers can submit transaction references.
+7. Authorised staff can verify or reject payment references.
+8. Duplicate payment references are rejected.
+9. Delivery fees are calculated using actual one-way road distance at the configured rate.
+10. The customer sees the fee before confirming payment.
+11. Administrators can manage products, prices and availability.
+12. Staff can process orders through the kitchen workflow.
+13. Sales reports use real database data.
+14. Role restrictions are enforced on the server.
+15. The website works on phones, tablets and desktop computers.
+16. Critical tests pass.
+17. Deployment instructions are complete.
+18. All external services that remain unconfigured are clearly identified.
+
+Do not substitute screenshots, mockups or hard-coded arrays for required functionality.
+
+Do not claim production readiness while critical security, payment or routing functionality remains untested.
+
+20. HOW TO START
+
+Begin by inspecting the existing development environment and repository.
+
+Then provide:
+
+1. A proposed folder structure.
+2. A brief architecture summary.
+3. Any essential configuration requirements.
+4. A phased implementation checklist.
+
+Proceed to implement the application, starting with the database schema and project foundation.
+
+If the environment is an AI coding workspace, work directly within the available project files.
+
+Preserve existing working code where appropriate.
+
+Ask focused questions only when a decision is necessary to avoid inventing business rules, real payment details, verified menu prices or the restaurant’s precise location.
+
+Prioritise correctness, security, maintainability and a polished customer experience over unnecessary complexity.
+
+The final product should be a professional restaurant technology platform delivered by Slother’s Tech House for Bourbon Pizza Junction.

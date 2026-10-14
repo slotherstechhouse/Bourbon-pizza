@@ -3,13 +3,21 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Bourbon Pizza Junction ordering and restaurant operations API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: menu
+    description: Public menu and business information
+  - name: ordering
+    description: Customer order and delivery flows
+  - name: administration
+    description: Staff-only management operations
+  - name: kitchen
+    description: Kitchen display operations
 paths:
   /healthz:
     get:
@@ -24,6 +32,559 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /menu/categories:
+    get:
+      operationId: getMenuCategories
+      tags: [menu]
+      summary: List active menu categories
+      responses:
+        "200":
+          description: Active categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Category"
+  /menu:
+    get:
+      operationId: listMenu
+      tags: [menu]
+      summary: Search and filter menu products
+      parameters:
+        - in: query
+          name: q
+          schema: { type: string }
+        - in: query
+          name: category
+          schema: { type: string }
+        - in: query
+          name: featured
+          schema: { type: boolean }
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1, default: 1 }
+        - in: query
+          name: pageSize
+          schema: { type: integer, minimum: 1, maximum: 50, default: 24 }
+      responses:
+        "200":
+          description: Matching products
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MenuPage"
+  /menu/{slug}:
+    get:
+      operationId: getMenuProduct
+      tags: [menu]
+      summary: Get an active product and its options
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Product details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "404":
+          description: Product not found
+  /business:
+    get:
+      operationId: getPublicBusiness
+      tags: [menu]
+      summary: Get customer-facing restaurant and ordering settings
+      responses:
+        "200":
+          description: Public business information
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BusinessPublic"
+  /promotions:
+    get:
+      operationId: listPublicPromotions
+      tags: [menu]
+      summary: List current customer-facing promotions
+      responses:
+        "200":
+          description: Current promotions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Promotion"
+  /delivery/quote:
+    post:
+      operationId: createDeliveryQuote
+      tags: [ordering]
+      summary: Calculate a delivery quote using a driving route
+      description: Returns an explicit unavailable error when the confirmed origin or routing provider is not configured.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeliveryQuoteInput"
+      responses:
+        "200":
+          description: Calculated delivery quote
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeliveryQuote"
+        "422":
+          description: Delivery cannot be quoted
+  /orders:
+    post:
+      operationId: createOrder
+      tags: [ordering]
+      summary: Recalculate prices and create a guest order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderInput"
+      responses:
+        "201":
+          description: Order created and awaiting the selected next step
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderCreated"
+        "409":
+          description: Duplicate submission or item no longer available
+        "422":
+          description: Invalid selections, price, or delivery quote
+  /orders/{reference}:
+    get:
+      operationId: getPublicOrder
+      tags: [ordering]
+      summary: Get an order using its non-guessable public reference
+      parameters:
+        - in: path
+          name: reference
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Order summary and current statuses
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicOrder"
+        "404":
+          description: Order not found
+  /orders/{reference}/payment-reference:
+    post:
+      operationId: submitPaymentReference
+      tags: [ordering]
+      summary: Submit a manual Mobile Money reference for staff review
+      parameters:
+        - in: path
+          name: reference
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentReferenceInput"
+      responses:
+        "202":
+          description: Reference received and awaiting verification
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentSubmission"
+        "409":
+          description: Reference already used or payment is not accepting references
+  /admin/dashboard:
+    get:
+      operationId: getAdminDashboard
+      tags: [administration]
+      summary: Get database-backed operational totals and recent activity
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dashboard"
+        "401":
+          description: Sign-in required
+        "403":
+          description: Insufficient staff permissions
+  /admin/orders:
+    get:
+      operationId: listAdminOrders
+      tags: [administration]
+      summary: Search staff-visible orders
+      parameters:
+        - in: query
+          name: q
+          schema: { type: string }
+        - in: query
+          name: status
+          schema: { type: string }
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1, default: 1 }
+        - in: query
+          name: pageSize
+          schema: { type: integer, minimum: 1, maximum: 100, default: 30 }
+      responses:
+        "200":
+          description: Staff-visible order page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminOrderPage"
+  /admin/orders/{id}/status:
+    patch:
+      operationId: updateOrderStatus
+      tags: [administration]
+      summary: Advance an order through its operational status
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderStatusInput"
+      responses:
+        "200":
+          description: Updated order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminOrder"
+        "403":
+          description: Insufficient staff permissions
+        "409":
+          description: Invalid status transition
+  /admin/payments:
+    get:
+      operationId: listAdminPayments
+      tags: [administration]
+      summary: List payment references awaiting staff review
+      parameters:
+        - in: query
+          name: status
+          schema: { type: string }
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1, default: 1 }
+      responses:
+        "200":
+          description: Payment verification queue
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentPage"
+  /admin/payments/{id}/verify:
+    post:
+      operationId: verifyPayment
+      tags: [administration]
+      summary: Verify a reference after matching the actual transaction
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentDecisionInput"
+      responses:
+        "200":
+          description: Payment verified and audit history recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentSubmission"
+        "403":
+          description: Insufficient staff permissions
+        "409":
+          description: Reference already used or status cannot transition
+  /admin/payments/{id}/reject:
+    post:
+      operationId: rejectPayment
+      tags: [administration]
+      summary: Reject a payment reference with a required reason
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentDecisionInput"
+      responses:
+        "200":
+          description: Payment rejected and audit history recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentSubmission"
+        "403":
+          description: Insufficient staff permissions
+  /admin/products:
+    get:
+      operationId: listAdminProducts
+      tags: [administration]
+      summary: List all products for menu management
+      responses:
+        "200":
+          description: Products including unavailable and archived entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+    post:
+      operationId: createAdminProduct
+      tags: [administration]
+      summary: Create a menu product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductInput"
+      responses:
+        "201":
+          description: Product created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+  /admin/products/{id}:
+    patch:
+      operationId: updateAdminProduct
+      tags: [administration]
+      summary: Update a menu product
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductUpdate"
+      responses:
+        "200":
+          description: Updated product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+  /admin/categories:
+    post:
+      operationId: createAdminCategory
+      tags: [administration]
+      summary: Create a menu category
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategoryInput"
+      responses:
+        "201":
+          description: Category created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+  /admin/categories/{id}:
+    patch:
+      operationId: updateAdminCategory
+      tags: [administration]
+      summary: Rename or reorder a menu category
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategoryUpdate"
+      responses:
+        "200":
+          description: Updated category
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+  /admin/promotions:
+    get:
+      operationId: listAdminPromotions
+      tags: [administration]
+      summary: List current and scheduled promotions
+      responses:
+        "200":
+          description: Promotion records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Promotion"
+    post:
+      operationId: createAdminPromotion
+      tags: [administration]
+      summary: Create a promotion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PromotionInput"
+      responses:
+        "201":
+          description: Promotion created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Promotion"
+  /admin/promotions/{id}:
+    patch:
+      operationId: updateAdminPromotion
+      tags: [administration]
+      summary: Update or disable a promotion
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PromotionUpdate"
+      responses:
+        "200":
+          description: Updated promotion
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Promotion"
+  /admin/settings:
+    get:
+      operationId: getAdminSettings
+      tags: [administration]
+      summary: Get protected business, delivery, and payment settings
+      responses:
+        "200":
+          description: Administrative settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminSettings"
+    patch:
+      operationId: updateAdminSettings
+      tags: [administration]
+      summary: Update protected business settings with an audit record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettingsUpdate"
+      responses:
+        "200":
+          description: Updated settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminSettings"
+  /admin/reports:
+    get:
+      operationId: getAdminReports
+      tags: [administration]
+      summary: Get database-backed sales and operations report
+      parameters:
+        - in: query
+          name: from
+          required: true
+          schema: { type: string, format: date }
+        - in: query
+          name: to
+          required: true
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: Report for the selected period
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SalesReport"
+  /kitchen/orders:
+    get:
+      operationId: listKitchenOrders
+      tags: [kitchen]
+      summary: Get active kitchen tickets
+      responses:
+        "200":
+          description: Kitchen orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/KitchenOrder"
+  /kitchen/orders/{id}/status:
+    patch:
+      operationId: updateKitchenOrderStatus
+      tags: [kitchen]
+      summary: Update an order's kitchen status
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderStatusInput"
+      responses:
+        "200":
+          description: Updated kitchen ticket
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KitchenOrder"
+        "403":
+          description: Insufficient staff permissions
+        "409":
+          description: Invalid status transition
 components:
   schemas:
     HealthStatus:
@@ -33,4 +594,525 @@ components:
           type: string
       required:
         - status
+    Category:
+      type: object
+      required: [id, name, slug, sortOrder]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        slug: { type: string }
+        sortOrder: { type: integer }
+    Option:
+      type: object
+      required: [id, name, priceDelta]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        priceDelta: { type: integer, minimum: 0 }
+        available: { type: boolean }
+    OptionGroup:
+      type: object
+      required: [id, name, required, multiple, options]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        required: { type: boolean }
+        multiple: { type: boolean }
+        minSelections: { type: integer, minimum: 0 }
+        maxSelections: { type: integer, minimum: 1 }
+        options:
+          type: array
+          items: { $ref: "#/components/schemas/Option" }
+    Product:
+      type: object
+      required: [id, name, slug, description, price, available, featured, category, optionGroups]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        slug: { type: string }
+        description: { type: string }
+        price: { type: integer, minimum: 0 }
+        imageUrl: { type: ["string", "null"], format: uri }
+        available: { type: boolean }
+        featured: { type: boolean }
+        demoLabel: { type: ["string", "null"] }
+        category: { $ref: "#/components/schemas/Category" }
+        optionGroups:
+          type: array
+          items: { $ref: "#/components/schemas/OptionGroup" }
+    MenuPage:
+      type: object
+      required: [items, total, page, pageSize]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Product" }
+        total: { type: integer }
+        page: { type: integer }
+        pageSize: { type: integer }
+    Promotion:
+      type: object
+      required: [id, title, description, kind, active, minimumOrder, eligibleProductIds, eligibleCategoryIds]
+      properties:
+        id: { type: string }
+        code: { type: ["string", "null"] }
+        title: { type: string }
+        description: { type: string }
+        kind: { type: string, enum: [percentage, fixed, bogo] }
+        value: { type: integer, minimum: 0 }
+        minimumOrder: { type: integer, minimum: 0 }
+        active: { type: boolean }
+        startsAt: { type: ["string", "null"], format: date-time }
+        endsAt: { type: ["string", "null"], format: date-time }
+        eligibleProductIds:
+          type: array
+          items: { type: string }
+        eligibleCategoryIds:
+          type: array
+          items: { type: string }
+    BusinessPublic:
+      type: object
+      required: [name, locationLabel, openingHours, pickupEnabled, deliveryEnabled, paymentMethods, demoMode]
+      properties:
+        name: { type: string }
+        locationLabel: { type: string }
+        address: { type: ["string", "null"] }
+        phone: { type: ["string", "null"] }
+        whatsapp: { type: ["string", "null"] }
+        openingHours:
+          type: array
+          items: { type: string }
+        pickupEnabled: { type: boolean }
+        deliveryEnabled: { type: boolean }
+        deliveryRatePerKm: { type: integer }
+        deliveryConfigured: { type: boolean }
+        paymentMethods:
+          type: array
+          items: { $ref: "#/components/schemas/PaymentMethodPublic" }
+        demoMode: { type: boolean }
+    PaymentMethodPublic:
+      type: object
+      required: [code, name, enabled, instructions, recipient]
+      properties:
+        code: { type: string, enum: [MTN, AIRTEL] }
+        name: { type: string }
+        enabled: { type: boolean }
+        instructions: { type: string }
+        recipient: { type: ["string", "null"] }
+    DeliveryQuoteInput:
+      type: object
+      required: [latitude, longitude, address]
+      properties:
+        latitude: { type: number, minimum: -90, maximum: 90 }
+        longitude: { type: number, minimum: -180, maximum: 180 }
+        address: { type: string, minLength: 3, maxLength: 500 }
+    DeliveryQuote:
+      type: object
+      required: [id, distanceKm, ratePerKm, fee, rounding, expiresAt, origin, destination]
+      properties:
+        id: { type: string }
+        distanceKm: { type: number }
+        ratePerKm: { type: integer }
+        fee: { type: integer }
+        rounding: { type: string, enum: [ceil] }
+        expiresAt: { type: string, format: date-time }
+        origin:
+          type: object
+          required: [latitude, longitude]
+          properties:
+            latitude: { type: number }
+            longitude: { type: number }
+        destination:
+          type: object
+          required: [latitude, longitude, address]
+          properties:
+            latitude: { type: number }
+            longitude: { type: number }
+            address: { type: string }
+    OrderItemInput:
+      type: object
+      required: [productId, quantity, optionIds]
+      properties:
+        productId: { type: string }
+        quantity: { type: integer, minimum: 1, maximum: 50 }
+        optionIds:
+          type: array
+          items: { type: string }
+        instructions: { type: string, maxLength: 500 }
+    OrderInput:
+      type: object
+      required: [idempotencyKey, customerName, phone, fulfillment, paymentMethod, items]
+      properties:
+        idempotencyKey: { type: string, minLength: 16, maxLength: 100 }
+        customerName: { type: string, minLength: 2, maxLength: 120 }
+        phone: { type: string, minLength: 7, maxLength: 30 }
+        email: { type: ["string", "null"], format: email }
+        fulfillment: { type: string, enum: [pickup, delivery] }
+        address: { type: ["string", "null"], maxLength: 500 }
+        latitude: { type: ["number", "null"], minimum: -90, maximum: 90 }
+        longitude: { type: ["number", "null"], minimum: -180, maximum: 180 }
+        deliveryQuoteId: { type: ["string", "null"] }
+        deliveryInstructions: { type: ["string", "null"], maxLength: 500 }
+        requestedAt: { type: ["string", "null"], format: date-time }
+        paymentMethod: { type: string, enum: [MTN, AIRTEL] }
+        promotionCode: { type: ["string", "null"] }
+        instructions: { type: ["string", "null"], maxLength: 1000 }
+        items:
+          type: array
+          minItems: 1
+          maxItems: 50
+          items: { $ref: "#/components/schemas/OrderItemInput" }
+    OrderCreated:
+      type: object
+      required: [reference, subtotal, discount, deliveryFee, total, currency, paymentStatus, orderStatus, paymentInstructions]
+      properties:
+        reference: { type: string }
+        subtotal: { type: integer }
+        discount: { type: integer }
+        deliveryFee: { type: integer }
+        total: { type: integer }
+        currency: { type: string, enum: [UGX] }
+        paymentStatus: { type: string }
+        orderStatus: { type: string }
+        paymentInstructions: { type: string }
+    PublicOrder:
+      type: object
+      required: [reference, customerName, fulfillment, paymentMethod, paymentStatus, orderStatus, items, subtotal, discount, deliveryFee, total, createdAt]
+      properties:
+        reference: { type: string }
+        customerName: { type: string }
+        fulfillment: { type: string }
+        paymentMethod: { type: string }
+        paymentStatus: { type: string }
+        orderStatus: { type: string }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/OrderItem" }
+        subtotal: { type: integer }
+        discount: { type: integer }
+        deliveryDistanceKm: { type: ["number", "null"] }
+        deliveryFee: { type: integer }
+        total: { type: integer }
+        createdAt: { type: string, format: date-time }
+        paymentInstructions: { type: string }
+    OrderItem:
+      type: object
+      required: [name, quantity, unitPrice, lineTotal, options, instructions]
+      properties:
+        name: { type: string }
+        quantity: { type: integer }
+        unitPrice: { type: integer }
+        lineTotal: { type: integer }
+        options:
+          type: array
+          items: { type: string }
+        instructions: { type: string }
+    PaymentReferenceInput:
+      type: object
+      required: [network, transactionReference]
+      properties:
+        network: { type: string, enum: [MTN, AIRTEL] }
+        transactionReference: { type: string, minLength: 4, maxLength: 100 }
+    PaymentSubmission:
+      type: object
+      required: [id, orderReference, network, status, transactionReference]
+      properties:
+        id: { type: string }
+        orderReference: { type: string }
+        network: { type: string }
+        status: { type: string }
+        transactionReference: { type: string }
+    PaymentDecisionInput:
+      type: object
+      required: [notes, confirmedAmount, confirmedRecipient, confirmedReference]
+      properties:
+        notes: { type: string, minLength: 3, maxLength: 1000 }
+        confirmedAmount: { type: integer, minimum: 0 }
+        confirmedRecipient: { type: string, minLength: 3, maxLength: 100 }
+        confirmedReference: { type: string, minLength: 4, maxLength: 100 }
+    Dashboard:
+      type: object
+      required: [ordersToday, grossSalesToday, awaitingConfirmation, awaitingPayment, preparing, ready, completed, cancelled, recentActivity, bestSellers]
+      properties:
+        ordersToday: { type: integer }
+        grossSalesToday: { type: integer }
+        awaitingConfirmation: { type: integer }
+        awaitingPayment: { type: integer }
+        preparing: { type: integer }
+        ready: { type: integer }
+        completed: { type: integer }
+        cancelled: { type: integer }
+        recentActivity:
+          type: array
+          items: { $ref: "#/components/schemas/Activity" }
+        bestSellers:
+          type: array
+          items: { $ref: "#/components/schemas/BestSeller" }
+    Activity:
+      type: object
+      required: [description, createdAt]
+      properties:
+        description: { type: string }
+        createdAt: { type: string, format: date-time }
+    BestSeller:
+      type: object
+      required: [name, quantity]
+      properties:
+        name: { type: string }
+        quantity: { type: integer }
+    AdminOrder:
+      type: object
+      required: [id, reference, customerName, phone, fulfillment, paymentMethod, paymentStatus, orderStatus, items, subtotal, discount, deliveryFee, total, createdAt]
+      properties:
+        id: { type: string }
+        reference: { type: string }
+        customerName: { type: string }
+        phone: { type: string }
+        fulfillment: { type: string }
+        paymentMethod: { type: string }
+        paymentStatus: { type: string }
+        orderStatus: { type: string }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/OrderItem" }
+        subtotal: { type: integer }
+        discount: { type: integer }
+        deliveryFee: { type: integer }
+        total: { type: integer }
+        createdAt: { type: string, format: date-time }
+        address: { type: ["string", "null"] }
+        instructions: { type: ["string", "null"] }
+    KitchenOrder:
+      type: object
+      required: [id, reference, fulfillment, orderStatus, items, createdAt, instructions]
+      properties:
+        id: { type: string }
+        reference: { type: string }
+        fulfillment: { type: string }
+        orderStatus: { type: string }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/OrderItem" }
+        createdAt: { type: string, format: date-time }
+        instructions: { type: string }
+    AdminOrderPage:
+      type: object
+      required: [items, total, page]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/AdminOrder" }
+        total: { type: integer }
+        page: { type: integer }
+    OrderStatusInput:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string, enum: [confirmed, preparing, ready, out_for_delivery, completed, cancelled] }
+        note: { type: ["string", "null"], maxLength: 500 }
+    PaymentPage:
+      type: object
+      required: [items, total, page]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/PaymentQueueItem" }
+        total: { type: integer }
+        page: { type: integer }
+    PaymentQueueItem:
+      type: object
+      required: [id, orderReference, customerName, phone, amount, network, recipient, transactionReference, status, submittedAt]
+      properties:
+        id: { type: string }
+        orderReference: { type: string }
+        customerName: { type: string }
+        phone: { type: string }
+        amount: { type: integer }
+        network: { type: string }
+        recipient: { type: ["string", "null"] }
+        transactionReference: { type: string }
+        status: { type: string }
+        submittedAt: { type: string, format: date-time }
+    ProductInput:
+      type: object
+      required: [name, slug, description, price, categoryId, available, featured]
+      properties:
+        name: { type: string, minLength: 2, maxLength: 120 }
+        slug: { type: string, minLength: 2, maxLength: 140 }
+        description: { type: string, maxLength: 1000 }
+        price: { type: integer, minimum: 0 }
+        imageUrl: { type: ["string", "null"], format: uri }
+        categoryId: { type: string }
+        available: { type: boolean }
+        featured: { type: boolean }
+        optionGroups:
+          type: array
+          items: { $ref: "#/components/schemas/OptionGroupInput" }
+    ProductUpdate:
+      type: object
+      properties:
+        name: { type: string, minLength: 2, maxLength: 120 }
+        description: { type: string, maxLength: 1000 }
+        price: { type: integer, minimum: 0 }
+        imageUrl: { type: ["string", "null"], format: uri }
+        categoryId: { type: string }
+        available: { type: boolean }
+        featured: { type: boolean }
+        archived: { type: boolean }
+        optionGroups:
+          type: array
+          items: { $ref: "#/components/schemas/OptionGroupInput" }
+    OptionGroupInput:
+      type: object
+      required: [name, required, multiple, options]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 100 }
+        required: { type: boolean }
+        multiple: { type: boolean }
+        minSelections: { type: integer, minimum: 0 }
+        maxSelections: { type: integer, minimum: 1 }
+        options:
+          type: array
+          items: { $ref: "#/components/schemas/OptionInput" }
+    OptionInput:
+      type: object
+      required: [name, priceDelta, available]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 100 }
+        priceDelta: { type: integer, minimum: 0 }
+        available: { type: boolean }
+    CategoryInput:
+      type: object
+      required: [name, slug, sortOrder]
+      properties:
+        name: { type: string, minLength: 2, maxLength: 80 }
+        slug: { type: string, minLength: 2, maxLength: 100 }
+        sortOrder: { type: integer, minimum: 0 }
+    CategoryUpdate:
+      type: object
+      properties:
+        name: { type: string, minLength: 2, maxLength: 80 }
+        sortOrder: { type: integer, minimum: 0 }
+        archived: { type: boolean }
+    PromotionInput:
+      type: object
+      required: [title, description, kind, value, active, minimumOrder]
+      properties:
+        code: { type: ["string", "null"], minLength: 2, maxLength: 30 }
+        title: { type: string, minLength: 2, maxLength: 120 }
+        description: { type: string, maxLength: 500 }
+        kind: { type: string, enum: [percentage, fixed, bogo] }
+        value: { type: integer, minimum: 0 }
+        minimumOrder: { type: integer, minimum: 0 }
+        usageLimit: { type: ["integer", "null"], minimum: 1 }
+        eligibleProductIds:
+          type: array
+          items: { type: string }
+        eligibleCategoryIds:
+          type: array
+          items: { type: string }
+        active: { type: boolean }
+        startsAt: { type: ["string", "null"], format: date-time }
+        endsAt: { type: ["string", "null"], format: date-time }
+    PromotionUpdate:
+      type: object
+      properties:
+        code: { type: ["string", "null"], minLength: 2, maxLength: 30 }
+        title: { type: string, minLength: 2, maxLength: 120 }
+        description: { type: string, maxLength: 500 }
+        kind: { type: string, enum: [percentage, fixed, bogo] }
+        value: { type: integer, minimum: 0 }
+        minimumOrder: { type: integer, minimum: 0 }
+        usageLimit: { type: ["integer", "null"], minimum: 1 }
+        eligibleProductIds:
+          type: array
+          items: { type: string }
+        eligibleCategoryIds:
+          type: array
+          items: { type: string }
+        active: { type: boolean }
+        startsAt: { type: ["string", "null"], format: date-time }
+        endsAt: { type: ["string", "null"], format: date-time }
+    AdminSettings:
+      type: object
+      required: [name, locationLabel, address, phone, whatsapp, deliveryRatePerKm, deliveryEnabled, pickupEnabled, deliveryConfigured, paymentMethods, openingHours]
+      properties:
+        name: { type: string }
+        locationLabel: { type: string }
+        address: { type: ["string", "null"] }
+        phone: { type: ["string", "null"] }
+        whatsapp: { type: ["string", "null"] }
+        deliveryRatePerKm: { type: integer }
+        deliveryEnabled: { type: boolean }
+        pickupEnabled: { type: boolean }
+        deliveryConfigured: { type: boolean }
+        originLatitude: { type: ["number", "null"] }
+        originLongitude: { type: ["number", "null"] }
+        maximumDeliveryKm: { type: ["number", "null"] }
+        paymentMethods:
+          type: array
+          items: { $ref: "#/components/schemas/PaymentMethodPublic" }
+        openingHours:
+          type: array
+          items: { type: string }
+    SettingsUpdate:
+      type: object
+      properties:
+        name: { type: string, minLength: 2, maxLength: 120 }
+        locationLabel: { type: string, maxLength: 200 }
+        address: { type: ["string", "null"], maxLength: 500 }
+        phone: { type: ["string", "null"], maxLength: 30 }
+        whatsapp: { type: ["string", "null"], maxLength: 30 }
+        deliveryRatePerKm: { type: integer, minimum: 0 }
+        deliveryEnabled: { type: boolean }
+        pickupEnabled: { type: boolean }
+        originLatitude: { type: ["number", "null"], minimum: -90, maximum: 90 }
+        originLongitude: { type: ["number", "null"], minimum: -180, maximum: 180 }
+        maximumDeliveryKm: { type: ["number", "null"], minimum: 0 }
+        openingHours:
+          type: array
+          items: { type: string, maxLength: 100 }
+        paymentMethods:
+          type: array
+          items: { $ref: "#/components/schemas/PaymentMethodUpdate" }
+    PaymentMethodUpdate:
+      type: object
+      required: [code, name, enabled, instructions]
+      properties:
+        code: { type: string, enum: [MTN, AIRTEL] }
+        name: { type: string, maxLength: 80 }
+        enabled: { type: boolean }
+        instructions: { type: string, maxLength: 1000 }
+        recipient: { type: ["string", "null"], maxLength: 100 }
+    SalesReport:
+      type: object
+      required: [from, to, orderCount, grossSales, discounts, refunds, netSales, averageOrderValue, byStatus, popularProducts, byCategory, byPaymentMethod]
+      properties:
+        from: { type: string, format: date }
+        to: { type: string, format: date }
+        orderCount: { type: integer }
+        grossSales: { type: integer }
+        discounts: { type: integer }
+        refunds: { type: integer }
+        netSales: { type: integer }
+        averageOrderValue: { type: integer }
+        byStatus:
+          type: array
+          items: { $ref: "#/components/schemas/ReportRow" }
+        popularProducts:
+          type: array
+          items: { $ref: "#/components/schemas/ReportRow" }
+        byCategory:
+          type: array
+          items: { $ref: "#/components/schemas/ReportRow" }
+        byPaymentMethod:
+          type: array
+          items: { $ref: "#/components/schemas/ReportRow" }
+    ReportRow:
+      type: object
+      required: [label, count, amount]
+      properties:
+        label: { type: string }
+        count: { type: integer }
+        amount: { type: integer }
 

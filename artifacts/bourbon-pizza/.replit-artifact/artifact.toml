@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Bourbon Pizza Junction"
+description = "A customer ordering and restaurant operations platform for Bourbon Pizza Junction in Wandegeya, Kampala, with a searchable menu, customizable orders, guest checkout, manual Mobile Money instructions, delivery quoting, and staff operations."
+version = "1.0.0"
+id = "artifacts/bourbon-pizza"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20034
+
+[services.development]
+run = "pnpm --filter @workspace/bourbon-pizza run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/bourbon-pizza", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/bourbon-pizza/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20034"
+BASE_PATH = "/"
